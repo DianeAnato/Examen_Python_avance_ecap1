@@ -1,35 +1,30 @@
-from dash import Dash
-import pandas as pd
 from dash import Dash, dcc, html, Input, Output
+import pandas as pd
 import plotly.express as px
+import os
 
 # =========================
 # 1. Chargement des données
 # =========================
-df = pd.read_csv("supermarket_sales.csv")
-
+# Utilisation de os.path pour garantir que le fichier est trouvé sur le serveur Linux
+base_path = os.path.dirname(__file__)
+file_path = os.path.join(base_path, "supermarket_sales.csv")
+df = pd.read_csv(file_path)
 
 # Conversion de la date
 df["Date"] = pd.to_datetime(df["Date"])
-
-# Création d'une variable semaine
 df["Week"] = df["Date"].dt.isocalendar().week.astype(int)
 
 # =========================
 # 2. Initialisation de l'app
 # =========================
 app = Dash(__name__)
-server = app.server
-# Options des filtres
-gender_options = [
-    {"label": gender, "value": gender}
-    for gender in sorted(df["Gender"].dropna().unique())
-]
+server = app.server  # <--- TRÈS IMPORTANT pour Render/Gunicorn
 
-city_options = [{"label": "Toutes", "value": "Toutes"}] + [
-    {"label": city, "value": city}
-    for city in sorted(df["City"].dropna().unique())
-]
+# Options des filtres
+gender_options = [{"label": g, "value": g} for g in sorted(df["Gender"].unique())]
+city_options = [{"label": "Toutes", "value": "Toutes"}] + \
+               [{"label": c, "value": c} for c in sorted(df["City"].unique())]
 
 # =========================
 # 3. Mise en page
@@ -41,171 +36,69 @@ app.layout = html.Div(
         "fontFamily": "Arial, sans-serif",
         "backgroundColor": "#bde0fe",
         "padding": "20px",
-        "boxShadow": "2px 0 8px rgba(0,0,0,0.08)",
-        "color": "fontwhite"
+        "color": "white" # <--- "fontwhite" corrigé en "white"
     },
     children=[
-
-        # ========= Colonne gauche : filtres =========
+        # Colonne gauche : filtres
         html.Div(
             style={
-                "width": "15%",
+                "width": "20%",
                 "backgroundColor": "#1864ab",
                 "padding": "20px",
-                "boxShadow": "2px 0 8px rgba(0,0,0,0.08)",
+                "borderRadius": "12px",
                 "color": "white"
             },
             children=[
                 html.H2("Filtres", style={"marginBottom": "30px"}),
-
-                html.Label("Sexe", style={"Weight": "bold"}),
+                html.Label("Sexe", style={"fontWeight": "bold"}),
                 dcc.Checklist(
                     id="gender-checklist",
                     options=gender_options,
-                    value=sorted(df["Gender"].dropna().unique()),  # les deux cochés au départ
+                    value=sorted(df["Gender"].unique()),
                     inline=False,
                     style={"marginBottom": "25px"},
-                    inputStyle={"marginRight": "8px", "marginLeft": "5px"}
+                    inputStyle={"marginRight": "8px"}
                 ),
-
-                html.Label("Ville", style={"Weight": "bold"}),
+                html.Label("Ville", style={"fontWeight": "bold"}),
                 dcc.Dropdown(
                     id="city-dropdown",
                     options=city_options,
                     value="Toutes",
                     clearable=False,
-                    style={"marginBottom": "25px","color": "black","backgroundColor": "white"},
-                     className="dropdown-style"
+                    style={"color": "black"}
                 )
             ]
         ),
 
-        # ========= Colonne droite : indicateurs + graphiques =========
+        # Colonne droite : KPIs + Graphs
         html.Div(
-            style={
-                "width": "85%",
-                "padding": "20px"
-            },
+            style={"width": "80%", "paddingLeft": "20px"},
             children=[
+                # Titre
                 html.Div(
-                        html.H1(
-                            "Tableau de bord des ventes du supermarché",
-                            style={
-                                "textAlign": "center",
-                                "margin": "0",
-                                "color": "white",
-                                "fontSize": "38px",
-                                "fontWeight": "bold",
-                                "letterSpacing": "2px",
-                                "textShadow": "2px 2px 6px rgba(0,0,0,0.4)",
-                                "fontFamily": "Verdana"
-                            }
-                        ),
-                        style={
-                            "backgroundColor": "#1864ab",  
-                             "padding": "20px",
-                             "borderRadius": "12px",
-                             "marginBottom": "30px",
-                             "boxShadow": "0 2px 8px rgba(0,0,0,0.2)"
-                        }
+                    html.H1("Tableau de bord des ventes", style={"textAlign": "center", "color": "white"}),
+                    style={"backgroundColor": "#1864ab", "padding": "10px", "borderRadius": "12px", "marginBottom": "20px"}
                 ),
-
-                # ===== KPI =====
-                html.Div(
-                    style={
-                        "display": "flex",
-                        "gap": "20px",
-                        "marginBottom": "30px"
-                    },
-                    children=[
-                        html.Div(
-                            style={
-                                "flex": "1",
-                                "backgroundColor": "white",
-                                "padding": "20px",
-                                "borderRadius": "12px",
-                                "boxShadow": "0 2px 8px rgba(0,0,0,0.08)",
-                                "textAlign": "center"
-                            },
-                            children=[
-                                html.H4("Montant total des achats", style={'color': '#2b8a3e', 'fontWeight': 'bold'}),
-                                html.H2(id="kpi-total-sales")
-                            ]
-                        ),
-
-                        html.Div(
-                            style={
-                                "flex": "1",
-                                "backgroundColor": "white",
-                                "padding": "20px",
-                                "borderRadius": "12px",
-                                "boxShadow": "0 2px 8px rgba(0,0,0,0.08)",
-                                "textAlign": "center"
-                            },
-                            children=[
-                                html.H4("Nombre total d'achats", style={'color': '#2b8a3e', 'fontWeight': 'bold'}),
-                                html.H2(id="kpi-total-orders")
-                            ]
-                        )
-                    ]
-                ),
-
-                # ===== 2 graphiques côte à côte =====
-                html.Div(
-                    style={
-                        "display": "flex",
-                        "gap": "20px",
-                        "marginBottom": "30px"
-
-                    },
-                    children=[
-                        html.Div(
-                            style={
-                                "flex": "1",
-                                "backgroundColor": "white",
-                                "padding": "15px",
-                                "borderRadius": "12px",
-                                "boxShadow": "0 2px 8px rgba(0,0,0,0.08)"
-                            },
-                            children=[
-                                dcc.Graph(id="histogram-total")
-                            ]
-                        ),
-
-                        html.Div(
-                            style={
-                                "flex": "1",
-                                "backgroundColor": "white",
-                                "padding": "15px",
-                                "borderRadius": "12px",
-                                "boxShadow": "0 2px 8px rgba(0,0,0,0.08)"
-                            },
-                            children=[
-                                dcc.Graph(id="bar-orders")
-                            ]
-                        )
-                    ]
-                ),
-
-                # ===== 1 grand graphique =====
-                html.Div(
-                    style={
-                        "backgroundColor": "white",
-                        "padding": "15px",
-                        "borderRadius": "12px",
-                        "boxShadow": "0 2px 8px rgba(0,0,0,0.08)"
-                    },
-                    children=[
-                        dcc.Graph(id="line-sales-week")
-                    ]
-                )
+                # KPIs
+                html.Div(style={"display": "flex", "gap": "20px", "marginBottom": "20px"}, children=[
+                    html.Div(children=[html.H4("Ventes Totales"), html.H2(id="kpi-total-sales")], 
+                             style={"flex": "1", "backgroundColor": "white", "color": "#2b8a3e", "textAlign": "center", "borderRadius": "12px", "padding": "10px"}),
+                    html.Div(children=[html.H4("Nb Achats"), html.H2(id="kpi-total-orders")], 
+                             style={"flex": "1", "backgroundColor": "white", "color": "#2b8a3e", "textAlign": "center", "borderRadius": "12px", "padding": "10px"}),
+                ]),
+                # Graphiques
+                html.Div(style={"display": "flex", "gap": "20px"}, children=[
+                    dcc.Graph(id="histogram-total", style={"flex": "1"}),
+                    dcc.Graph(id="bar-orders", style={"flex": "1"})
+                ]),
+                dcc.Graph(id="line-sales-week", style={"marginTop": "20px"})
             ]
         )
     ]
 )
 
 # =========================
-# 4. Callback principal
+# 4. Callback
 # =========================
 @app.callback(
     Output("kpi-total-sales", "children"),
@@ -217,107 +110,33 @@ app.layout = html.Div(
     Input("city-dropdown", "value")
 )
 def update_dashboard(selected_genders, selected_city):
-    dff = df.copy()
+    if not selected_genders:
+        return "0 €", "0", {}, {}, {}
 
-    # Filtre sexe
-    if selected_genders:
-        dff = dff[dff["Gender"].isin(selected_genders)]
-    else:
-        dff = dff.iloc[0:0]   # si rien n'est coché, dataframe vide
-
-    # Filtre ville
+    dff = df[df["Gender"].isin(selected_genders)].copy()
     if selected_city != "Toutes":
         dff = dff[dff["City"] == selected_city]
 
-    # ===== KPI =====
-    total_sales = round(dff["Total"].sum(), 2)
-    total_orders = dff["Invoice ID"].nunique()
+    # KPIs
+    total_sales = f"{dff['Total'].sum():,.2f} €"
+    total_orders = f"{dff['Invoice ID'].nunique():,}"
 
-    formatted_sales = f"{total_sales:,.2f} €"
-    formatted_orders = f"{total_orders:,}"
-
-    # ===== Histogramme des montants =====
-    fig_hist = px.histogram(
-        dff,
-        x="Total",
-        nbins=20,
-        color="Gender",
-        title="<b>Répartition des montants totaux des achats</b>",
-        color_discrete_sequence=["#1864ab", "#c92a2a"],
-        labels={
-        "Total": "Montant total des achats",
-        "Gender": "Sexe"
-    }
-    )
-    fig_hist.update_layout(title_x=0.5)
-    fig_hist.update_yaxes(title="Fréquence")
-
-    # ===== Diagramme en barres du nombre d'achats =====
+    # Graphs
+    fig_hist = px.histogram(dff, x="Total", color="Gender", title="Répartition des montants")
+    
     bar_data = dff.groupby(["City", "Gender"], as_index=False)["Invoice ID"].count()
-    bar_data = bar_data.rename(columns={"Invoice ID": "Nombre_achats"})
+    fig_bar = px.bar(bar_data, x="City", y="Invoice ID", color="Gender", barmode="group", title="Achats par Ville")
 
-    fig_bar = px.bar(
-        bar_data,
-        x="City",
-        y="Nombre_achats",
-        color="Gender",
-        barmode="group",
-        title="<b>Nombre total d'achats par sexe et par ville </b>",
-        color_discrete_sequence=["#1864ab", "#c92a2a"],
-        labels={
-        "City": "Ville",
-        "Nombre_achats": "Nombre d'achats",
-        "Gender": "Sexe"
-         }
-    )
-    fig_bar.update_layout(title_x=0.5)
-
-    # ===== Courbe d'évolution =====
-    # ===== Courbe d'évolution propre =====
-
-    # début de semaine (lundi) pour chaque date
     dff["Week_Start"] = dff["Date"].dt.to_period("W").apply(lambda r: r.start_time)
+    weekly_data = dff.groupby(["Week_Start", "City"], as_index=False)["Total"].sum()
+    fig_line = px.line(weekly_data, x="Week_Start", y="Total", color="City", title="Évolution Hebdomadaire")
 
-    weekly_data = (
-        dff.groupby(["Week_Start", "City"], as_index=False)["Total"]
-        .sum()
-    )
-
-    fig_line = px.line(
-        weekly_data,
-        x="Week_Start",
-        y="Total",
-        color="City",
-        markers=True,
-        title="<b>Évolution du montant total des achats par semaine par ville</b>",
-        color_discrete_sequence=["#1864ab", "#c92a2a", "#0b7285"],
-        labels={
-            "Week_Start": "Semaine",
-            "Total": "Montant total des achats",
-            "City": "Ville"
-        }
-    )
-
-    fig_line.update_layout(title_x=0.5)
-
-    # 👇 FORMAT DE L’AXE (important)
-    fig_line.update_xaxes(
-        tickformat="%b %Y",   # Mar 2019, May 2019...
-        tickangle=0,
-        showgrid=True
-    )
-
-    return (
-        formatted_sales,
-        formatted_orders,
-        fig_hist,
-        fig_bar,
-        fig_line
-    )
+    return total_sales, total_orders, fig_hist, fig_bar, fig_line
 
 # =========================
-# 5. Lancement de l'app
+# 5. Lancement
 # =========================
 if __name__ == '__main__':
-    # Remplace app.run(debug=True) par ceci :
-    app.run_server(debug=False, host='0.0.0.0', port=8080)
+    # Configuration pour Render (port dynamique)
+    port = int(os.environ.get("PORT", 8050))
+    app.run_server(debug=False, host='0.0.0.0', port=port)
