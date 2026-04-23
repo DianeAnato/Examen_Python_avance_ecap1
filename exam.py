@@ -19,7 +19,7 @@ df["Week"] = df["Date"].dt.isocalendar().week.astype(int)
 # 2. Initialisation de l'app
 # =========================
 app = Dash(__name__)
-
+server = app.server
 # Options des filtres
 gender_options = [
     {"label": gender, "value": gender}
