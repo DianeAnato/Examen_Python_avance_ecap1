@@ -319,4 +319,5 @@ def update_dashboard(selected_genders, selected_city):
 # 5. Lancement de l'app
 # =========================
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Remplace app.run(debug=True) par ceci :
+    app.run_server(debug=False, host='0.0.0.0', port=8080)
