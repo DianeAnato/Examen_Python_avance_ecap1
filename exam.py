@@ -111,7 +111,7 @@ app.layout = html.Div(
     Input("city-dropdown", "value")
 )
 def update_dashboard(selected_genders, selected_city):
-    # 1. Gestion du cas "Rien n'est coché" : on montre tout par défaut
+    # 1. Gestion du cas "Rien n'est coché"
     if not selected_genders:
         dff = df.copy()
     else:
@@ -121,16 +121,15 @@ def update_dashboard(selected_genders, selected_city):
     if selected_city != "Toutes":
         dff = dff[dff["City"] == selected_city]
 
-    # 3. Sécurité CRITIQUE : Si après filtrage il n'y a plus de données
+    # 3. Sécurité : Si après filtrage il n'y a plus de données
     if dff.empty:
-        # On renvoie des valeurs à zéro et des dictionnaires vides pour les graphes
         return "0.00 €", "0", {}, {}, {}
 
-    # 4. Calcul des KPIs (seulement si dff n'est pas vide)
+    # 4. Calcul des KPIs
     total_sales = f"{dff['Total'].sum():,.2f} €"
     total_orders = f"{dff['Invoice ID'].nunique():,}"
 
-    # Histogramme
+    # --- Histogramme ---
     fig_hist = px.histogram(
         dff,
         x="Total",
@@ -141,7 +140,7 @@ def update_dashboard(selected_genders, selected_city):
         labels={"Total": "Montant total des achats", "Gender": "Sexe"}
     )
     
-    # Bar Chart
+    # --- Bar Chart ---
     bar_data = dff.groupby(["City", "Gender"], as_index=False)["Invoice ID"].count()
     bar_data = bar_data.rename(columns={"Invoice ID": "Nombre_achats"})
     
@@ -156,7 +155,7 @@ def update_dashboard(selected_genders, selected_city):
         labels={"City": "Ville", "Nombre_achats": "Nombre d'achats", "Gender": "Sexe"}
     )
 
-    # Line Chart
+    # --- Line Chart ---
     dff["Week_Start"] = dff["Date"].dt.to_period("W").apply(lambda r: r.start_time)
     weekly_data = dff.groupby(["Week_Start", "City"], as_index=False)["Total"].sum()
     
@@ -176,6 +175,7 @@ def update_dashboard(selected_genders, selected_city):
     )
 
     return total_sales, total_orders, fig_hist, fig_bar, fig_line
+    
 
 # =========================
 # 5. Lancement
