@@ -13,6 +13,9 @@ FILE_PATH = os.path.join(BASE_DIR, "supermarket_sales.csv")
 df = pd.read_csv(FILE_PATH, encoding="utf-8")
 # Nettoyage des noms de colonnes
 df.columns = df.columns.str.strip()
+df["Gender"] = df["Gender"].str.strip()  
+df["City"] = df["City"].str.strip()      
+
 # Vérification minimale
 required_cols = {"Date", "Gender", "City", "Total", "Invoice ID"}
 if not required_cols.issubset(df.columns):
@@ -124,11 +127,15 @@ app.layout = html.Div(
     Input("city-dropdown", "value")
 )
 def update_dashboard(selected_genders, selected_city):
-    # 1. Gestion du cas "Rien n'est coché"
+    print(f"=== Filtres reçus : genders={selected_genders}, city={selected_city}")
+    print(f"=== Valeurs Gender dans df : {df['Gender'].unique()}")
+    
     if not selected_genders:
         dff = df.copy()
     else:
-        dff = df[df["Gender"].isin(selected_genders)].copy()
+        dff = df[df["Gender"].isin(selected_genders)]
+    
+    print(f"=== Lignes après filtre Gender : {len(dff)}")
     
     # 2. Filtrage par ville
     if selected_city != "Toutes":
