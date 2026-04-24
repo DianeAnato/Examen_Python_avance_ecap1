@@ -111,23 +111,22 @@ app.layout = html.Div(
     Input("city-dropdown", "value")
 )
 def update_dashboard(selected_genders, selected_city):
-    # Correction de l'indentation ici :
+    # 1. Gestion du cas "Rien n'est coché" : on montre tout par défaut
     if not selected_genders:
-        return "0.00 €", "0", {}, {}, {}
-
-    dff = df[df["Gender"].isin(selected_genders)].copy()
+        dff = df.copy()
+    else:
+        dff = df[df["Gender"].isin(selected_genders)].copy()
     
-    # On s'assure que Gender est bien traité comme du texte
-    dff["Gender"] = dff["Gender"].astype(str)
-    
+    # 2. Filtrage par ville
     if selected_city != "Toutes":
         dff = dff[dff["City"] == selected_city]
 
-    # Sécurité si le filtre vide tout
+    # 3. Sécurité CRITIQUE : Si après filtrage il n'y a plus de données
     if dff.empty:
+        # On renvoie des valeurs à zéro et des dictionnaires vides pour les graphes
         return "0.00 €", "0", {}, {}, {}
 
-    # KPIs
+    # 4. Calcul des KPIs (seulement si dff n'est pas vide)
     total_sales = f"{dff['Total'].sum():,.2f} €"
     total_orders = f"{dff['Invoice ID'].nunique():,}"
 
