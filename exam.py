@@ -6,10 +6,18 @@ import os
 # =========================
 # 1. Chargement des données
 # =========================
-# Utilisation de os.path pour garantir que le fichier est trouvé sur le serveur Linux
 base_path = os.path.dirname(__file__)
 file_path = os.path.join(base_path, "supermarket_sales.csv")
-df = pd.read_csv(file_path)
+
+try:
+    # On essaie de lire avec une détection automatique du séparateur
+    df = pd.read_csv(file_path, sep=None, engine='python', encoding='utf-8')
+except Exception:
+    # Si ça échoue, on force le séparateur classique
+    df = pd.read_csv(file_path, sep=',', encoding='latin1')
+
+# Vérification immédiate des colonnes pour éviter les erreurs de noms
+df.columns = [c.strip() for c in df.columns]
 
 # Conversion de la date
 df["Date"] = pd.to_datetime(df["Date"])
@@ -175,7 +183,7 @@ def update_dashboard(selected_genders, selected_city):
     )
 
     return total_sales, total_orders, fig_hist, fig_bar, fig_line
-    
+
 
 # =========================
 # 5. Lancement
