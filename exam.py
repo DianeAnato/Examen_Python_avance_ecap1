@@ -111,10 +111,12 @@ app.layout = html.Div(
 )
 
 def update_dashboard(selected_genders, selected_city):
-    if not selected_genders:
+  dff = df.copy()  
+  if not selected_genders:
         return "0.00 €", "0", {}, {}, {}
 
-    dff = df[df["Gender"].isin(selected_genders)].copy()
+    dff = dff[dff["Gender"].isin(selected_genders)]
+    dff["Gender"] = dff["Gender"].astype(str)
     if selected_city != "Toutes":
         dff = dff[dff["City"] == selected_city]
 
