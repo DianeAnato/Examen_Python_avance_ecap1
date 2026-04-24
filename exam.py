@@ -97,6 +97,7 @@ app.layout = html.Div(
     ]
 )
 
+
 # =========================
 # 4. Callback
 # =========================
@@ -109,78 +110,72 @@ app.layout = html.Div(
     Input("gender-checklist", "value"),
     Input("city-dropdown", "value")
 )
-
 def update_dashboard(selected_genders, selected_city):
-  dff = df.copy()  
-  if not selected_genders:
+    # Correction de l'indentation ici :
+    if not selected_genders:
         return "0.00 €", "0", {}, {}, {}
 
-    dff = dff[dff["Gender"].isin(selected_genders)]
+    dff = df[df["Gender"].isin(selected_genders)].copy()
+    
+    # On s'assure que Gender est bien traité comme du texte
     dff["Gender"] = dff["Gender"].astype(str)
+    
     if selected_city != "Toutes":
         dff = dff[dff["City"] == selected_city]
 
-    # On s'assure que dff contient bien les deux sexes ou au moins un
-    if dff.empty or "Gender" not in dff.columns:
+    # Sécurité si le filtre vide tout
+    if dff.empty:
         return "0.00 €", "0", {}, {}, {}
-
 
     # KPIs
     total_sales = f"{dff['Total'].sum():,.2f} €"
     total_orders = f"{dff['Invoice ID'].nunique():,}"
 
-    # Graphs
-    if dff.empty:
-        fig_hist = px.histogram(title="Aucune donnée disponible")
-    else:
-        fig_hist = px.histogram(
-            dff,
-            x="Total",
-            nbins=20,
-            color="Gender", 
-            title="<b>Répartition des montants totaux des achats</b>",
-            color_discrete_map={"Female": "#c92a2a", "Male": "#1864ab"},
-            labels={"Total": "Montant total des achats", "Gender": "Sexe"}
-        )
+    # Histogramme
+    fig_hist = px.histogram(
+        dff,
+        x="Total",
+        nbins=20,
+        color="Gender", 
+        title="<b>Répartition des montants totaux des achats</b>",
+        color_discrete_map={"Female": "#c92a2a", "Male": "#1864ab"},
+        labels={"Total": "Montant total des achats", "Gender": "Sexe"}
+    )
     
+    # Bar Chart
     bar_data = dff.groupby(["City", "Gender"], as_index=False)["Invoice ID"].count()
     bar_data = bar_data.rename(columns={"Invoice ID": "Nombre_achats"})
-    if bar_data.empty:
-        fig_bar = px.bar(title="Aucune donnée disponible")  
-    else:
-        fig_bar = px.bar(
-            bar_data,
-            x="City",
-            y="Nombre_achats",
-            color="Gender",
-            barmode="group",
-            title="<b>Nombre total d'achats par sexe et par ville</b>",
-            color_discrete_map={"Male": "#1864ab", "Female": "#c92a2a"},
-            labels={"City": "Ville", "Nombre_achats": "Nombre d'achats", "Gender": "Sexe"}
+    
+    fig_bar = px.bar(
+        bar_data,
+        x="City",
+        y="Nombre_achats",
+        color="Gender",
+        barmode="group",
+        title="<b>Nombre total d'achats par sexe et par ville</b>",
+        color_discrete_map={"Male": "#1864ab", "Female": "#c92a2a"},
+        labels={"City": "Ville", "Nombre_achats": "Nombre d'achats", "Gender": "Sexe"}
     )
+
+    # Line Chart
     dff["Week_Start"] = dff["Date"].dt.to_period("W").apply(lambda r: r.start_time)
     weekly_data = dff.groupby(["Week_Start", "City"], as_index=False)["Total"].sum()
-    if weekly_data.empty:
-        fig_line = px.line(title="Aucune donnée disponible")
-    else:
-        fig_line = px.line(
-            weekly_data,
-            x="Week_Start",
-            y="Total",
-            color="City",
-            markers=True,
-            title="<b>Évolution du montant total des achats par semaine par ville</b>",
-            color_discrete_map={
-                "Yangon": "#1864ab", 
-                "Mandalay": "#c92a2a", 
-                "Naypyitaw": "#0b7285"
-            },
-            labels={
-                "Week_Start": "Semaine",
-                "Total": "Montant total des achats",
-                "City": "Ville"
-            }
-        )
+    
+    fig_line = px.line(
+        weekly_data,
+        x="Week_Start",
+        y="Total",
+        color="City",
+        markers=True,
+        title="<b>Évolution du montant total des achats par semaine</b>",
+        color_discrete_map={
+            "Yangon": "#1864ab", 
+            "Mandalay": "#c92a2a", 
+            "Naypyitaw": "#0b7285"
+        },
+        labels={"Week_Start": "Semaine", "Total": "Montant", "City": "Ville"}
+    )
+
     return total_sales, total_orders, fig_hist, fig_bar, fig_line
 
 # =========================
