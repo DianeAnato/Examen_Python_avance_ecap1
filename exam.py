@@ -118,7 +118,8 @@ def update_dashboard(selected_genders, selected_city):
     if selected_city != "Toutes":
         dff = dff[dff["City"] == selected_city]
 
-    if dff.empty:
+    # On s'assure que dff contient bien les deux sexes ou au moins un
+    if dff.empty or "Gender" not in dff.columns:
         return "0.00 €", "0", {}, {}, {}
 
 
