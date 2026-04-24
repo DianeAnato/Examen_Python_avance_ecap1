@@ -61,13 +61,16 @@ app.layout = html.Div(
             children=[
                 html.H2("Filtres", style={"marginBottom": "30px"}),
                 html.Label("Sexe", style={"fontWeight": "bold"}),
-                dcc.Checklist(
-                    id="gender-checklist",
+                dcc.Dropdown(
+                    id="gender-dropdown",
                     options=gender_options,
                     value=sorted(df["Gender"].unique()),
-                    inline=False,
-                    style={"marginBottom": "25px"},
-                    inputStyle={"marginRight": "8px"}
+                    multi=True,
+                    placeholder="Sélectionner un sexe",
+                    style={
+                        "marginBottom": "25px",
+                        "color": "black"
+                    }
                 ),
                 html.Label("Ville", style={"fontWeight": "bold"}),
                 dcc.Dropdown(
@@ -117,7 +120,7 @@ app.layout = html.Div(
     Output("histogram-total", "figure"),
     Output("bar-orders", "figure"),
     Output("line-sales-week", "figure"),
-    Input("gender-checklist", "value"),
+    Input("gender-dropdown", "value"),
     Input("city-dropdown", "value")
 )
 def update_dashboard(selected_genders, selected_city):
