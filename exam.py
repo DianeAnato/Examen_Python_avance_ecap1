@@ -6,15 +6,17 @@ import os
 # =========================
 # 1. Chargement des données
 # =========================
-base_path = os.path.dirname(__file__)
-file_path = os.path.join(base_path, "supermarket_sales.csv")
-
-try:
-    # On essaie de lire avec une détection automatique du séparateur
-    df = pd.read_csv(file_path, sep=None, engine='python', encoding='utf-8')
-except Exception:
-    # Si ça échoue, on force le séparateur classique
-    df = pd.read_csv(file_path, sep=',', encoding='latin1')
+# Chemin absolu basé sur le dossier du script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FILE_PATH = os.path.join(BASE_DIR, "supermarket_sales.csv")
+# Lecture avec gestion explicite du séparateur
+df = pd.read_csv(FILE_PATH, encoding="utf-8")
+# Nettoyage des noms de colonnes
+df.columns = df.columns.str.strip()
+# Vérification minimale
+required_cols = {"Date", "Gender", "City", "Total", "Invoice ID"}
+if not required_cols.issubset(df.columns):
+    raise ValueError(f"Colonnes manquantes. Trouvées : {list(df.columns)}")
 
 # Vérification immédiate des colonnes pour éviter les erreurs de noms
 df.columns = [c.strip() for c in df.columns]
