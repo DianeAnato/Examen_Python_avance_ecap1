@@ -139,8 +139,7 @@ def update_dashboard(selected_genders, selected_city):
             nbins=20,
             color="Gender", 
             title="<b>Répartition des montants totaux des achats</b>",
-            color_discrete_map={"Female": "#c92a2a", "Male": "#1864ab"}, 
-            category_orders={"Gender": ["Female", "Male"]},
+            color_discrete_map={"Female": "#c92a2a", "Male": "#1864ab"},
             labels={"Total": "Montant total des achats", "Gender": "Sexe"}
         )
     
@@ -157,7 +156,6 @@ def update_dashboard(selected_genders, selected_city):
             barmode="group",
             title="<b>Nombre total d'achats par sexe et par ville</b>",
             color_discrete_map={"Male": "#1864ab", "Female": "#c92a2a"},
-            category_orders={"Gender": ["Female", "Male"]}, 
             labels={"City": "Ville", "Nombre_achats": "Nombre d'achats", "Gender": "Sexe"}
     )
     dff["Week_Start"] = dff["Date"].dt.to_period("W").apply(lambda r: r.start_time)
