@@ -28,6 +28,11 @@ df.columns = [c.strip() for c in df.columns]
 df["Date"] = pd.to_datetime(df["Date"])
 df["Week"] = df["Date"].dt.isocalendar().week.astype(int)
 
+# Debug pour vérifier
+print(f"=== Valeurs Gender : {df['Gender'].unique()}")
+print(f"=== Valeurs City : {df['City'].unique()}")
+print(f"=== Nombre de lignes : {len(df)}")
+
 # =========================
 # 2. Initialisation de l'app
 # =========================
@@ -156,7 +161,7 @@ def update_dashboard(selected_genders, selected_city):
         nbins=20,
         color="Gender", 
         title="<b>Répartition des montants totaux des achats</b>",
-        color_discrete_map={"Female": "#c92a2a", "Male": "#1864ab"},
+        color_discrete_sequence=["#c92a2a", "#1864ab"],
         labels={"Total": "Montant total des achats", "Gender": "Sexe"}
     )
     
@@ -171,7 +176,7 @@ def update_dashboard(selected_genders, selected_city):
         color="Gender",
         barmode="group",
         title="<b>Nombre total d'achats par sexe et par ville</b>",
-        color_discrete_map={"Male": "#1864ab", "Female": "#c92a2a"},
+        color_discrete_sequence=["#c92a2a", "#1864ab"],
         labels={"City": "Ville", "Nombre_achats": "Nombre d'achats", "Gender": "Sexe"}
     )
 
