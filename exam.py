@@ -128,50 +128,59 @@ def update_dashboard(selected_genders, selected_city):
     total_orders = f"{dff['Invoice ID'].nunique():,}"
 
     # Graphs
-    fig_hist = px.histogram(
-        dff,
-        x="Total",
-        nbins=20,
-        color="Gender", 
-        title="<b>Répartition des montants totaux des achats</b>",
-        color_discrete_map={"Female": "#c92a2a", "Male": "#1864ab"}, 
-        labels={"Total": "Montant total des achats", "Gender": "Sexe"}
-    )
+    if dff.empty:
+        fig_hist = px.histogram(title="Aucune donnée disponible")
+    else:
+        fig_hist = px.histogram(
+            dff,
+            x="Total",
+            nbins=20,
+            color="Gender", 
+            title="<b>Répartition des montants totaux des achats</b>",
+            color_discrete_map={"Female": "#c92a2a", "Male": "#1864ab"}, 
+            category_orders={"Gender": ["Female", "Male"]},
+            labels={"Total": "Montant total des achats", "Gender": "Sexe"}
+        )
     
     bar_data = dff.groupby(["City", "Gender"], as_index=False)["Invoice ID"].count()
     bar_data = bar_data.rename(columns={"Invoice ID": "Nombre_achats"})
-    fig_bar = px.bar(
-        bar_data,
-        x="City",
-        y="Nombre_achats",
-        color="Gender",
-        barmode="group",
-        title="<b>Nombre total d'achats par sexe et par ville</b>",
-        # On fixe les couleurs : Male = Bleu, Female = Rouge
-        color_discrete_map={"Male": "#1864ab", "Female": "#c92a2a"}, 
-        labels={"City": "Ville", "Nombre_achats": "Nombre d'achats", "Gender": "Sexe"}
-  )
+    if bar_data.empty:
+        fig_bar = px.bar(title="Aucune donnée disponible")  
+    else:
+        fig_bar = px.bar(
+            bar_data,
+            x="City",
+            y="Nombre_achats",
+            color="Gender",
+            barmode="group",
+            title="<b>Nombre total d'achats par sexe et par ville</b>",
+            color_discrete_map={"Male": "#1864ab", "Female": "#c92a2a"},
+            category_orders={"Gender": ["Female", "Male"]}, 
+            labels={"City": "Ville", "Nombre_achats": "Nombre d'achats", "Gender": "Sexe"}
+    )
     dff["Week_Start"] = dff["Date"].dt.to_period("W").apply(lambda r: r.start_time)
     weekly_data = dff.groupby(["Week_Start", "City"], as_index=False)["Total"].sum()
-    fig_line = px.line(
-        weekly_data,
-        x="Week_Start",
-        y="Total",
-        color="City",
-        markers=True,
-        title="<b>Évolution du montant total des achats par semaine par ville</b>",
-        # On associe chaque ville à sa couleur
-        color_discrete_map={
-            "Yangon": "#1864ab", 
-            "Mandalay": "#c92a2a", 
-            "Naypyitaw": "#0b7285"
-        },
-        labels={
-            "Week_Start": "Semaine",
-            "Total": "Montant total des achats",
-            "City": "Ville"
-        }
-    )
+    if weekly_data.empty:
+        fig_line = px.line(title="Aucune donnée disponible")
+    else:
+        fig_line = px.line(
+            weekly_data,
+            x="Week_Start",
+            y="Total",
+            color="City",
+            markers=True,
+            title="<b>Évolution du montant total des achats par semaine par ville</b>",
+            color_discrete_map={
+                "Yangon": "#1864ab", 
+                "Mandalay": "#c92a2a", 
+                "Naypyitaw": "#0b7285"
+            },
+            labels={
+                "Week_Start": "Semaine",
+                "Total": "Montant total des achats",
+                "City": "Ville"
+            }
+        )
     return total_sales, total_orders, fig_hist, fig_bar, fig_line
 
 # =========================
